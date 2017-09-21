@@ -1035,7 +1035,7 @@ end function
 function amuse_set_internal_energy(id,u) result(ret)
   include 'globals.h'
   integer :: id,p,ret
-  real*8 :: u
+  real*8 :: u, q
   p=muse_find_particle(pordercount,id,nbodies,nbexist)
   if(p.EQ.0) then
     ret=-1
@@ -1044,26 +1044,25 @@ function amuse_set_internal_energy(id,u) result(ret)
   if(p.GT.nsph) then
     ret=-2
     return
-  endif  
-  if(nbexist(p).NE.id) call terror("id error 2")
-  if(.not.(u.GT.0.AND.u.LT.HUGE(u))) then
-    ret=-3
-    return
   endif
+  if(nbexist(p).NE.id) call terror("id error 2")
+  q=1.
   if(uentropy) then
+    if(.NOT.radiate.AND.entropy(p).GT.0.AND.entold(p).GT.0) q=entold(p)/entropy(p)
     entropy(p)=u*gamma1/rho(p)**gamma1
-    entold(p)=entropy(p)
+    entold(p)=q*entropy(p)
     csound(p)=sqrt(gamma*gamma1*u)
   else
+    if(.NOT.radiate.AND.ethermal(p).GT.0.AND.ethold(p).GT.0) q=ethold(p)/ethermal(p)
     if(.NOT.isotherm) then
       csound(p)=sqrt(gamma*gamma1*u)
     else
-      csound(p)=sqrt(u)   
+      csound(p)=sqrt(u)
     endif
     ethermal(p)=u
-    ethold(p)=u
+    ethold(p)=q*u
   endif
-  ret=0 
+  ret=0
 end function
 function amuse_set_star_tform(id,tf) result(ret)
   include 'globals.h'
